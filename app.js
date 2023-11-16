@@ -1,45 +1,47 @@
-class Example extends Phaser.Scene
-{
-    preload ()
-    {
-        this.load.setBaseURL('https://labs.phaser.io');
+WIDTH = 32
+HEIGHT = 32
 
-        this.load.image('sky', 'assets/skies/space3.png');
-        this.load.image('logo', 'assets/sprites/phaser3-logo.png');
-        this.load.image('red', 'assets/particles/red.png');
+
+
+class Tetris extends Phaser.Scene {
+    wellX = 1
+    wellY = 1
+
+    wellWidth = 10
+    wellHeight = 20
+    
+
+    preload() {
+        this.load.image('tiles', 'spritesheet.png');
     }
 
-    create ()
-    {
-        this.add.image(400, 300, 'sky');
+    create() {
+        const tilemapData = new Array(HEIGHT).fill(1).map(() => new Array(WIDTH).fill(1));
 
-        const particles = this.add.particles(0, 0, 'red', {
-            speed: 100,
-            scale: { start: 1, end: 0 },
-            blendMode: 'ADD'
+        for (let column = this.wellX; column < this.wellX + this.wellWidth; column++) {
+            for (let row = this.wellY; row < this.wellY + this.wellHeight; row++) {
+                tilemapData[row][column] = 0;
+            }
+        }
+
+        const map = this.make.tilemap({
+            data: tilemapData,
+            tileWidth: 16,
+            tileHeight: 16,
+            width: WIDTH,
+            height: HEIGHT,
         });
+        var tileset = map.addTilesetImage('tiles');
+        const layer = map.createLayer(0, tileset);
 
-        const logo = this.physics.add.image(400, 100, 'logo');
-
-        logo.setVelocity(100, 200);
-        logo.setBounce(1, 1);
-        logo.setCollideWorldBounds(true);
-
-        particles.startFollow(logo);
     }
 }
 
 const config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
-    scene: Example,
-    physics: {
-        default: 'arcade',
-        arcade: {
-            gravity: { y: 200 }
-        }
-    }
+    width: 16 * WIDTH,
+    height: 16 * HEIGHT,
+    scene: Tetris,
 };
 
 const game = new Phaser.Game(config);
