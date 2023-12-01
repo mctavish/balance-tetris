@@ -391,6 +391,7 @@ class Tetris extends Phaser.Scene {
             }
         }
         this.updateWeights();
+        this.background.setFrame(2);
 
         this.score = 0;
         this.completedLines = 0;
