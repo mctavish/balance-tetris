@@ -187,6 +187,10 @@ class Tetris extends Phaser.Scene {
     }
 
     setTilt(newTilt) {
+        if (Math.abs(newTilt) > 2) {
+            this.gameOver();
+            return;
+        }
         if (this.currentTilt != newTilt) {
             const tiltDiff = newTilt - this.currentTilt;
             for (let y = 0; y < this.height; y++) {
@@ -198,6 +202,7 @@ class Tetris extends Phaser.Scene {
                 }
             }
             this.currentTilt = newTilt;
+            this.background.setFrame(2-newTilt);
             this.completeLines();
         }
     }
@@ -360,7 +365,7 @@ class Tetris extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('background', 'background.png');
+        this.load.spritesheet('background', 'background.png', { frameWidth: 600, frameHeight: 800});
         this.load.spritesheet('tiles', 'spritesheet.png', { frameWidth: 16, frameHeight: 16 });
     }
 
@@ -388,7 +393,7 @@ class Tetris extends Phaser.Scene {
     }
 
     create() {
-        this.add.image(300, 400, 'background');
+        this.background = this.add.sprite(300, 400, 'background', 2);
 
         const gridX = 60;
         const gridY = 70;
