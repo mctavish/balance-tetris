@@ -149,6 +149,7 @@ class Tetris extends Phaser.Scene {
 
     // TODO: Factor out all this duplicated code.
     finalizeTetronimo() {
+        this.soundThudd.play();
         const mask = this.tetronimo.masks[this.tetronimo.currentMask];
         for (let x = 0; x < 4; x++) {
             for (let y = 0; y < 4; y++) {
@@ -241,6 +242,7 @@ class Tetris extends Phaser.Scene {
             }
         }
         if (lineCount > 0) {
+            this.soundBaDing.play();
             this.completedLines += lineCount;
             if (lineCount == 1) {
                 this.addScore(40);
@@ -372,6 +374,8 @@ class Tetris extends Phaser.Scene {
     preload() {
         this.load.spritesheet('background', 'background.png', { frameWidth: 600, frameHeight: 800});
         this.load.spritesheet('tiles', 'spritesheet.png', { frameWidth: 16, frameHeight: 16 });
+        this.load.audio('ba-ding', ['tetris-ba-ding.ogg']);
+        this.load.audio('thud', ['tetris-thud.ogg']);
     }
 
     gameOver() {
@@ -478,6 +482,9 @@ class Tetris extends Phaser.Scene {
         this.newGameButton = this.add.text(100, 300, 'NEW GAME', {fontSize: '36px', fontStyle: 'bold', backgroundColor: '#00d000', padding: {x: 20, y: 10}});
         this.newGameButton.setInteractive().on('pointerdown', () => this.setUpGame());
         this.newGameButton.setVisible(false);
+
+        this.soundThudd = this.sound.add('thud');
+        this.soundBaDing = this.sound.add('ba-ding');
 
         this.nextTick = 0;
         this.moveRequested = [0, 0];
