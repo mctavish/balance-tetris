@@ -1,46 +1,290 @@
-WIDTH = 32
-HEIGHT = 32
+const tetronimos = [
+    {
+        tile: 7,
+        startOffset: -1,
+        masks: [
+            [0,0,0,0,
+             1,1,1,1,
+             0,0,0,0,
+             0,0,0,0],
+            [0,1,0,0,
+             0,1,0,0,
+             0,1,0,0,
+             0,1,0,0],
+           ]
+    },
+    {
+        tile: 8,
+        startOffset: -1,
+        masks: [
+            [0,0,0,0,
+             0,0,1,0,
+             1,1,1,0,
+             0,0,0,0],
+            [0,1,0,0,
+             0,1,0,0,
+             0,1,1,0,
+             0,0,0,0],
+            [0,0,0,0,
+             1,0,0,0,
+             1,1,1,0,
+             0,0,0,0],
+            [0,1,1,0,
+             0,0,1,0,
+             0,0,1,0,
+             0,0,0,0],
+        ],
+    },
+]
 
 
 
 class Tetris extends Phaser.Scene {
-    wellX = 1
-    wellY = 1
+    constructor() {
+        super();
+        this.tetronimo = null;
 
-    wellWidth = 10
-    wellHeight = 20
-    
-
-    preload() {
-        this.load.image('tiles', 'spritesheet.png');
     }
 
-    create() {
-        const tilemapData = new Array(HEIGHT).fill(1).map(() => new Array(WIDTH).fill(1));
+    spawnTetronimo() {
+        const id = Math.floor(Math.random() * tetronimos.length);
+        this.tetronimo = {
+            tile: tetronimos[id].tile,
+            masks: tetronimos[id].masks,
+            currentMask: 0,
+            position: [5, tetronimos[id].startOffset]
+        };
+        this.showTetronimo();
+        if (this.isBlocked([0, 0], 0)) {
+            this.gameOver();
+        }
+    }
 
-        for (let column = this.wellX; column < this.wellX + this.wellWidth; column++) {
-            for (let row = this.wellY; row < this.wellY + this.wellHeight; row++) {
-                tilemapData[row][column] = 0;
+    // TODO: Factor out all this duplicated code.
+    finalizeTetronimo() {
+        const mask = this.tetronimo.masks[this.tetronimo.currentMask];
+        for (let x = 0; x < 4; x++) {
+            for (let y = 0; y < 4; y++) {
+                if (mask[x + y * 4]) {
+                    this.setData(this.tetronimo.position[0] + x, this.tetronimo.position[1] + y, this.tetronimo.tile);
+                }
             }
         }
 
-        const map = this.make.tilemap({
-            data: tilemapData,
-            tileWidth: 16,
-            tileHeight: 16,
-            width: WIDTH,
-            height: HEIGHT,
-        });
-        var tileset = map.addTilesetImage('tiles');
-        const layer = map.createLayer(0, tileset);
+        for (let y = 0; y < this.height; y++) {
+            let completeLine = true;
+            for (let x = 0; x < this.width; x++) {
+                if (this.getData(x, y) == 0) {
+                    completeLine = false;
+                }
+            }
+            if (completeLine) {
+                for (let y2 = y; y2 > 0; y2--) {
+                    for (let x = 0; x < this.width; x++) {
+                        this.setData(x, y2, this.getData(x, y2-1));
+                    }
+                }
+                for (let x = 0; x < this.width; x++) {
+                    this.setData(x, 0, this.getData(x, 0));
+                }
+            }
+        }
 
+        this.tetronimo = null;
     }
-}
+
+    hideTetronimo() {
+        const mask = this.tetronimo.masks[this.tetronimo.currentMask];
+        for (let x = 0; x < 4; x++) {
+            for (let y = 0; y < 4; y++) {
+                if (mask[x + y * 4]) {
+                    this.setTile(this.tetronimo.position[0] + x, this.tetronimo.position[1] + y, 0);
+                }
+            }
+        }
+    }
+
+    showTetronimo() {
+        const mask = this.tetronimo.masks[this.tetronimo.currentMask];
+        for (let x = 0; x < 4; x++) {
+            for (let y = 0; y < 4; y++) {
+                if (mask[x + y * 4]) {
+                    this.setTile(this.tetronimo.position[0] + x, this.tetronimo.position[1] + y, this.tetronimo.tile);
+                }
+            }
+        }
+    }
+
+    isBlocked(delta, rotation) {
+        const mask = this.tetronimo.masks[(this.tetronimo.currentMask + rotation) % this.tetronimo.masks.length];
+        for (let x = 0; x < 4; x++) {
+            for (let y = 0; y < 4; y++) {
+                if (mask[x + y * 4]) {
+                    const px = this.tetronimo.position[0] + x + delta[0];
+                    const py = this.tetronimo.position[1] + y + delta[1];
+
+                    if (py < 0 || py >= this.height || px < 0 || px >= this.width) {
+                        return true;
+                    }
+
+                    const data = this.getData(px, py);
+                    if (data) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    moveTetronimo(delta) {
+        this.hideTetronimo();
+        this.tetronimo.position[0] += delta[0];
+        this.tetronimo.position[1] += delta[1];
+        this.showTetronimo();
+    }
+
+    rotateTetronimo(rotation) {
+        this.hideTetronimo();
+        this.tetronimo.currentMask = (this.tetronimo.currentMask + rotation) % this.tetronimo.masks.length;
+        this.showTetronimo();
+    }
+
+    tick() {
+        if (this.isBlocked([0, 1], 0)) {
+            this.finalizeTetronimo();
+        } else {
+            this.moveTetronimo([0, 1]);
+        }
+    }
+
+    getData(x, y) {
+        return this.data[x + y * this.width];
+    }
+
+    setTile(x, y, value) {
+        const index = x + y * this.width;
+        this.tiles[index].setFrame(value);
+    }
+
+    setData(x, y, value) {
+        const index = x + y * this.width;
+        this.data[index] = value;
+        this.tiles[index].setFrame(value);
+    }
+
+    preload() {
+        this.load.image('background', 'background.png');
+        this.load.spritesheet('tiles', 'spritesheet.png', { frameWidth: 16, frameHeight: 16 });
+    }
+
+    gameOver() {
+        this.playing = false;
+    }
+
+    /** Changes keyboard events into requests to the gameloop. */
+    inputHandler(event) {
+        if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.RIGHT) {
+            this.moveRequested[0] = 1;
+        }
+        if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.LEFT) {
+            this.moveRequested[0] = -1;
+        }
+        if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.DOWN) {
+            this.moveRequested[1] = 1;
+        }
+        if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.UP) {
+            this.rotateRequested = true;
+        }
+        if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.SPACE) {
+            this.dropRequested = true;
+        }
+    }
+
+    create() {
+        this.add.image(300, 400, 'background');
+
+        const gridX1 = 60;
+        const gridY1 = 70;
+        const tileW = 32;
+        const tileH = 32;
+        this.width = 10;
+        this.height = 20;
+
+        this.tiles = new Array(this.width * this.height);
+        this.data = new Array(this.width * this.height);
+
+        for (let x = 0; x < 10; x++) {
+            for (let y = 0; y < 20; y++) {
+                let index = x + y * this.width;
+                this.tiles[index] = this.add.sprite(x * tileW + gridX1, y * tileH + gridY1, 'tiles', 0);
+                this.tiles[index].scale = 2;
+                this.data[index] = 0;
+            }
+        }
+
+        this.nextTick = 0;
+        this.moveRequested = [0, 0];
+        this.dropRequested = false;
+        this.rotateRequested = false;
+        this.playing = true;
+
+        this.input.keyboard.on('keydown', this.inputHandler, this);
+    }
+
+    processInput(time) {
+        if (this.moveRequested[0] || this.moveRequested[1]) {
+            if (this.tetronimo) {
+                if (!this.isBlocked(this.moveRequested, 0)) {
+                    this.moveTetronimo(this.moveRequested);
+                }
+            }
+            this.moveRequested = [0, 0];
+        }
+        if (this.rotateRequested) {
+            if (this.tetronimo) {
+                if (!this.isBlocked([0, 0], 1)) {
+                    this.rotateTetronimo(1);
+                }
+            }
+
+            this.rotateRequested = false;
+        }
+        if (this.dropRequested) {
+            if (this.tetronimo) {
+                let dy = 0;
+                while (!this.isBlocked([0, dy], 0)) {
+                    dy++;
+                }
+                this.moveTetronimo([0, dy-1]);
+                this.finalizeTetronimo();
+                this.nextTick = time + 500;
+            }
+            this.dropRequested = false;
+        }
+    }
+
+    update(time, delta) {
+        if (this.playing) {
+            this.processInput(time);
+
+            if (time > this.nextTick) {
+                if (this.tetronimo) {
+                    this.tick();
+                } else {
+                    this.spawnTetronimo();
+                }
+                this.nextTick = time + 500;
+            }
+        }
+    }
+};
+
 
 const config = {
-    type: Phaser.AUTO,
-    width: 16 * WIDTH,
-    height: 16 * HEIGHT,
+    type: Phaser.CANVAS,
+    width: 600,
+    height: 800,
     scene: Tetris,
 };
 
