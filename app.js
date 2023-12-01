@@ -377,6 +377,7 @@ class Tetris extends Phaser.Scene {
     gameOver() {
         this.playing = false;
         this.background.setFrame(5);
+        this.newGameButton.setVisible(true);
     }
 
     setUpGame() {
@@ -393,6 +394,7 @@ class Tetris extends Phaser.Scene {
 
         this.tetronimo = 0;
         this.setNextTickTime();
+        this.newGameButton.setVisible(false);
         this.playing = true;
     }
 
@@ -472,6 +474,10 @@ class Tetris extends Phaser.Scene {
         this.add.text(380, 410, 'the scales will tilt!');
         this.add.text(380, 440, 'Tilt too far and it\'s');
         this.add.text(380, 460, '    Game Over!');
+
+        this.newGameButton = this.add.text(100, 300, 'NEW GAME', {fontSize: '36px', fontStyle: 'bold', backgroundColor: '#00d000', padding: {x: 20, y: 10}});
+        this.newGameButton.setInteractive().on('pointerdown', () => this.setUpGame());
+        this.newGameButton.setVisible(false);
 
         this.nextTick = 0;
         this.moveRequested = [0, 0];
