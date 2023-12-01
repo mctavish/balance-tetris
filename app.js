@@ -405,18 +405,23 @@ class Tetris extends Phaser.Scene {
     /** Changes keyboard events into requests to the gameloop. */
     inputHandler(event) {
         if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.RIGHT) {
+            event.preventDefault();
             this.moveRequested[0] = 1;
         }
         if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.LEFT) {
+            event.preventDefault();
             this.moveRequested[0] = -1;
         }
         if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.DOWN) {
+            event.preventDefault();
             this.moveRequested[1] = 1;
         }
         if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.UP) {
+            event.preventDefault();
             this.rotateRequested = true;
         }
         if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.SPACE) {
+            event.preventDefault();
             this.dropRequested = true;
         }
     }
