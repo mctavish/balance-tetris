@@ -119,7 +119,11 @@ const tetronimos = [
     },
 ]
 
+const INITIAL_INTERVAL = 500;
+const INTERVAL_SPEEDUP = 0.8;
+const INTERVAL_LINES = 10;
 
+const TILT_THRESHOLD = 8;
 
 class Tetris extends Phaser.Scene {
     constructor() {
@@ -183,7 +187,7 @@ class Tetris extends Phaser.Scene {
         this.setNumber(this.leftWeightNumbers, leftWeight);
         this.setNumber(this.rightWeightNumbers, rightWeight);
 
-        this.setTilt(Math.trunc((leftWeight - rightWeight) / 10));
+        this.setTilt(Math.trunc((leftWeight - rightWeight) / TILT_THRESHOLD));
     }
 
     setTilt(newTilt) {
@@ -237,6 +241,7 @@ class Tetris extends Phaser.Scene {
             }
         }
         if (lineCount > 0) {
+            this.completedLines += lineCount;
             if (lineCount == 1) {
                 this.addScore(40);
             } else if (lineCount == 2) {
@@ -371,6 +376,24 @@ class Tetris extends Phaser.Scene {
 
     gameOver() {
         this.playing = false;
+        this.background.setFrame(5);
+    }
+
+    setUpGame() {
+        for (let x = 0; x < 10; x++) {
+            for (let y = 0; y < 20; y++) {
+                this.setData(x, y, 0);
+            }
+        }
+        this.updateWeights();
+
+        this.score = 0;
+        this.completedLines = 0;
+        this.addScore(0);
+
+        this.tetronimo = 0;
+        this.setNextTickTime();
+        this.playing = true;
     }
 
     /** Changes keyboard events into requests to the gameloop. */
@@ -436,14 +459,28 @@ class Tetris extends Phaser.Scene {
             this.scoreNumbers[i].scale = this.tileScale;
         }
 
+        this.add.text(380, 5, 'BALANCE TETRIS', {fontSize: '24px', fontStyle: 'bold'});
+        this.add.text(380, 200, 'Controls', {fontSize: '20px', fontStyle: 'bold'});
+        this.add.text(380, 220, 'Move:   Left & Right');
+        this.add.text(380, 240, 'Lower:  Down');
+        this.add.text(380, 260, 'Rotate: Up');
+        this.add.text(380, 280, 'Drop:   Space');
+
+        this.add.text(380, 350, 'Balancing', {fontSize: '20px', fontStyle: 'bold'});
+        this.add.text(380, 370, 'If you put too many');
+        this.add.text(380, 390, 'blocks on one side,');
+        this.add.text(380, 410, 'the scales will tilt!');
+        this.add.text(380, 440, 'Tilt too far and it\'s');
+        this.add.text(380, 460, '    Game Over!');
+
         this.nextTick = 0;
         this.moveRequested = [0, 0];
         this.dropRequested = false;
         this.rotateRequested = false;
         this.playing = true;
-        this.tickInterval = 500;
         this.score = 0;
         this.currentTilt = 0;
+        this.completedLines = 0;
 
         this.input.keyboard.on('keydown', this.inputHandler, this);
 
@@ -452,7 +489,9 @@ class Tetris extends Phaser.Scene {
     }
 
     setNextTickTime() {
-        this.nextTick = this.currentTime + this.tickInterval;
+        const interval = INITIAL_INTERVAL * (INTERVAL_SPEEDUP ** Math.floor(this.completedLines / INTERVAL_LINES));
+        this.nextTick = this.currentTime + interval;
+
     }
 
     processInput() {
