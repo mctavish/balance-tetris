@@ -130,11 +130,12 @@ class Tetris extends Phaser.Scene {
 
     spawnTetronimo() {
         const id = Math.floor(Math.random() * tetronimos.length);
+        const tiltLoss = Math.abs(this.currentTilt);
         this.tetronimo = {
             tile: tetronimos[id].tile,
             masks: tetronimos[id].masks,
             currentMask: 0,
-            position: [3, tetronimos[id].startOffset]
+            position: [3, tetronimos[id].startOffset + tiltLoss]
         };
         this.showTetronimo();
         if (this.isBlocked([0, 0], 0)) {
@@ -148,7 +149,10 @@ class Tetris extends Phaser.Scene {
         for (let x = 0; x < 4; x++) {
             for (let y = 0; y < 4; y++) {
                 if (mask[x + y * 4]) {
-                    this.setData(this.tetronimo.position[0] + x, this.tetronimo.position[1] + y, this.tetronimo.tile);
+                    const px = this.tetronimo.position[0] + x;
+                    const py = this.tetronimo.position[1] + y + this.tiltAdjust(px);
+
+                    this.setData(px, py, this.tetronimo.tile);
                 }
             }
         }
@@ -178,6 +182,24 @@ class Tetris extends Phaser.Scene {
         }
         this.setNumber(this.leftWeightNumbers, leftWeight);
         this.setNumber(this.rightWeightNumbers, rightWeight);
+
+        this.setTilt(Math.floor((leftWeight - rightWeight) / 10));
+    }
+
+    setTilt(newTilt) {
+        if (this.currentTilt != newTilt) {
+            const tiltDiff = newTilt - this.currentTilt;
+            for (let y = 0; y < this.height; y++) {
+                for (let x = 0; x < this.width / 2; x++) {
+                    this.moveTile(x, y, tiltDiff);
+                }
+                for (let x = this.width / 2; x < this.width; x++) {
+                    this.moveTile(x, y, -tiltDiff);
+                }
+            }
+            this.currentTilt = newTilt;
+            this.completeLines();
+        }
     }
 
     addScore(value) {
@@ -191,7 +213,8 @@ class Tetris extends Phaser.Scene {
         for (let y = 0; y < this.height; y++) {
             let completeLine = true;
             for (let x = 0; x < this.width; x++) {
-                if (this.getData(x, y) == 0) {
+                const py = y + this.tiltAdjust(x);
+                if (this.getData(x, py) == 0) {
                     completeLine = false;
                 }
             }
@@ -199,7 +222,8 @@ class Tetris extends Phaser.Scene {
                 lineCount++;
                 for (let y2 = y; y2 > 0; y2--) {
                     for (let x = 0; x < this.width; x++) {
-                        this.setData(x, y2, this.getData(x, y2-1));
+                        const py = y2 + this.tiltAdjust(x)
+                        this.setData(x, py, this.getData(x, py-1));
                     }
                 }
                 for (let x = 0; x < this.width; x++) {
@@ -225,7 +249,9 @@ class Tetris extends Phaser.Scene {
         for (let x = 0; x < 4; x++) {
             for (let y = 0; y < 4; y++) {
                 if (mask[x + y * 4]) {
-                    this.setTile(this.tetronimo.position[0] + x, this.tetronimo.position[1] + y, 0);
+                    const px = this.tetronimo.position[0] + x;
+                    const py = this.tetronimo.position[1] + y + this.tiltAdjust(px);
+                    this.setTile(px, py, 0);
                 }
             }
         }
@@ -236,9 +262,19 @@ class Tetris extends Phaser.Scene {
         for (let x = 0; x < 4; x++) {
             for (let y = 0; y < 4; y++) {
                 if (mask[x + y * 4]) {
-                    this.setTile(this.tetronimo.position[0] + x, this.tetronimo.position[1] + y, this.tetronimo.tile);
+                    const px = this.tetronimo.position[0] + x;
+                    const py = this.tetronimo.position[1] + y + this.tiltAdjust(px);
+                    this.setTile(px, py, this.tetronimo.tile);
                 }
             }
+        }
+    }
+
+    tiltAdjust(x) {
+        if (x < this.width / 2) {
+            return Math.floor(-this.currentTilt / 2);
+        } else {
+            return Math.floor(this.currentTilt / 2);
         }
     }
 
@@ -248,7 +284,7 @@ class Tetris extends Phaser.Scene {
             for (let y = 0; y < 4; y++) {
                 if (mask[x + y * 4]) {
                     const px = this.tetronimo.position[0] + x + delta[0];
-                    const py = this.tetronimo.position[1] + y + delta[1];
+                    const py = this.tetronimo.position[1] + y + delta[1] + this.tiltAdjust(px);
 
                     if (py < 0 || py >= this.height || px < 0 || px >= this.width) {
                         return true;
@@ -286,7 +322,15 @@ class Tetris extends Phaser.Scene {
     }
 
     getData(x, y) {
+        if (y < 0 || y >= this.height) {
+            return 0;
+        }
         return this.data[x + y * this.width];
+    }
+
+    moveTile(x, y, delta) {
+        const index = x + y * this.width;
+        this.tiles[index].y += delta * this.tileH / 2;
     }
 
     setTile(x, y, value) {
@@ -348,14 +392,14 @@ class Tetris extends Phaser.Scene {
 
         const gridX = 60;
         const gridY = 70;
-        const tileW = 32;
-        const tileH = 32;
+        this.tileW = 32;
+        this.tileH = 32;
         const leftWeightX = 50;
         const rightWeightX = 250;
-        const weightY = 730;
+        const weightY = 770;
         const scoreX = 400;
         const scoreY = 140;
-        const tileScale = 2;
+        this.tileScale = 2;
         this.width = 10;
         this.height = 20;
 
@@ -365,8 +409,8 @@ class Tetris extends Phaser.Scene {
         for (let x = 0; x < 10; x++) {
             for (let y = 0; y < 20; y++) {
                 let index = x + y * this.width;
-                this.tiles[index] = this.add.sprite(x * tileW + gridX, y * tileH + gridY, 'tiles', 0);
-                this.tiles[index].scale = tileScale;
+                this.tiles[index] = this.add.sprite(x * this.tileW + gridX, y * this.tileH + gridY, 'tiles', 0);
+                this.tiles[index].scale = this.tileScale;
                 this.data[index] = 0;
             }
         }
@@ -374,17 +418,17 @@ class Tetris extends Phaser.Scene {
         this.leftWeightNumbers = new Array(3);
         this.rightWeightNumbers = new Array(3);
         for (let i = 0; i < 3; i++) {
-            this.leftWeightNumbers[i] = this.add.sprite(i * tileW + leftWeightX, weightY, 'tiles', 0);
-            this.leftWeightNumbers[i].scale = tileScale;
-            this.rightWeightNumbers[i] = this.add.sprite(i * tileW + rightWeightX, weightY, 'tiles', 0);
-            this.rightWeightNumbers[i].scale = tileScale;
+            this.leftWeightNumbers[i] = this.add.sprite(i * this.tileW + leftWeightX, weightY, 'tiles', 0);
+            this.leftWeightNumbers[i].scale = this.tileScale;
+            this.rightWeightNumbers[i] = this.add.sprite(i * this.tileW + rightWeightX, weightY, 'tiles', 0);
+            this.rightWeightNumbers[i].scale = this.tileScale;
         }
 
         const scoreDigits = 6;
         this.scoreNumbers = new Array(scoreDigits);
         for (let i = 0; i < scoreDigits; i++) {
-            this.scoreNumbers[i] = this.add.sprite(i * tileW + scoreX, scoreY, 'tiles', 0);
-            this.scoreNumbers[i].scale = tileScale;
+            this.scoreNumbers[i] = this.add.sprite(i * this.tileW + scoreX, scoreY, 'tiles', 0);
+            this.scoreNumbers[i].scale = this.tileScale;
         }
 
         this.nextTick = 0;
@@ -394,6 +438,7 @@ class Tetris extends Phaser.Scene {
         this.playing = true;
         this.tickInterval = 500;
         this.score = 0;
+        this.currentTilt = 0;
 
         this.input.keyboard.on('keydown', this.inputHandler, this);
 
