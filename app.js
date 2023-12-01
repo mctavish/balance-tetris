@@ -183,7 +183,7 @@ class Tetris extends Phaser.Scene {
         this.setNumber(this.leftWeightNumbers, leftWeight);
         this.setNumber(this.rightWeightNumbers, rightWeight);
 
-        this.setTilt(Math.floor((leftWeight - rightWeight) / 10));
+        this.setTilt(Math.trunc((leftWeight - rightWeight) / 10));
     }
 
     setTilt(newTilt) {
