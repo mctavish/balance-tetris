@@ -1,5 +1,14 @@
 import Phaser from 'phaser';
 
+// @ts-ignore
+import ImgBackground from './images/background.png';
+// @ts-ignore
+import ImgSpriteSheet from './images/spritesheet.png';
+// @ts-ignore
+import AudBaDing from './audio/tetris-ba-ding.ogg';
+// @ts-ignore
+import AudThud from './audio/tetris-thud.ogg';
+
 const tetronimos = [
     {
         tile: 1,
@@ -424,10 +433,10 @@ class Tetris extends Phaser.Scene {
     }
 
     preload() {
-        this.load.spritesheet('background', 'background.png', { frameWidth: 600, frameHeight: 800});
-        this.load.spritesheet('tiles', 'spritesheet.png', { frameWidth: 16, frameHeight: 16 });
-        this.load.audio('ba-ding', ['tetris-ba-ding.ogg']);
-        this.load.audio('thud', ['tetris-thud.ogg']);
+        this.load.spritesheet('background', ImgBackground, { frameWidth: 600, frameHeight: 800});
+        this.load.spritesheet('tiles', ImgSpriteSheet, { frameWidth: 16, frameHeight: 16 });
+        this.load.audio('ba-ding', [AudBaDing]);
+        this.load.audio('thud', [AudThud]);
     }
 
     gameOver() {

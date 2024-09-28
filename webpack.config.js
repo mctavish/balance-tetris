@@ -17,6 +17,10 @@ module.exports = {
                 loader: 'ts-loader',
                 exclude: /node_modules/,
             },
+            {
+                test: /\.(png|ogg)$/i,
+                type: 'asset/resource',
+            },
         ],
     },
     externals: {
