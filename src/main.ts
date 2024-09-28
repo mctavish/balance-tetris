@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 
+import { Tetronimos } from './tetronimos';
+
 // @ts-ignore
 import ImgBackground from './images/background.png';
 // @ts-ignore
@@ -8,127 +10,6 @@ import ImgSpriteSheet from './images/spritesheet.png';
 import AudBaDing from './audio/tetris-ba-ding.ogg';
 // @ts-ignore
 import AudThud from './audio/tetris-thud.ogg';
-
-const tetronimos = [
-    {
-        tile: 1,
-        startOffset: -1,
-        masks: [
-            [0,0,0,0,
-             1,1,1,1,
-             0,0,0,0,
-             0,0,0,0],
-            [0,1,0,0,
-             0,1,0,0,
-             0,1,0,0,
-             0,1,0,0],
-           ]
-    },
-    {
-        tile: 2,
-        startOffset: -1,
-        masks: [
-            [0,0,0,0,
-             0,0,1,0,
-             1,1,1,0,
-             0,0,0,0],
-            [0,1,1,0,
-             0,0,1,0,
-             0,0,1,0,
-             0,0,0,0],
-            [0,0,0,0,
-             1,1,1,0,
-             1,0,0,0,
-             0,0,0,0],
-            [0,1,0,0,
-             0,1,0,0,
-             0,1,1,0,
-             0,0,0,0],
-        ],
-    },
-    {
-        tile: 3,
-        startOffset: -1,
-        masks: [
-            [0,0,0,0,
-             1,0,0,0,
-             1,1,1,0,
-             0,0,0,0],
-            [0,0,1,0,
-             0,0,1,0,
-             0,1,1,0,
-             0,0,0,0],
-            [0,0,0,0,
-             1,1,1,0,
-             0,0,1,0,
-             0,0,0,0],
-            [0,1,1,0,
-             0,1,0,0,
-             0,1,0,0,
-             0,0,0,0],
-        ],
-    },
-    {
-        tile: 4,
-        startOffset: -1,
-        masks: [
-            [0,0,0,0,
-             0,1,1,0,
-             0,1,1,0,
-             0,0,0,0],
-        ],
-    },
-    {
-        tile: 5,
-        startOffset: -1,
-        masks: [
-            [0,0,0,0,
-             0,1,0,0,
-             1,1,1,0,
-             0,0,0,0],
-            [0,1,0,0,
-             0,1,1,0,
-             0,1,0,0,
-             0,0,0,0],
-            [0,0,0,0,
-             1,1,1,0,
-             0,1,0,0,
-             0,0,0,0],
-            [0,1,0,0,
-             1,1,0,0,
-             0,1,0,0,
-             0,0,0,0],
-        ],
-    },
-    {
-        tile: 6,
-        startOffset: -1,
-        masks: [
-            [0,0,0,0,
-             1,1,0,0,
-             0,1,1,0,
-             0,0,0,0],
-            [0,0,1,0,
-             0,1,1,0,
-             0,1,0,0,
-             0,0,0,0],
-        ],
-    },
-    {
-        tile: 7,
-        startOffset: -1,
-        masks: [
-            [0,0,0,0,
-             0,1,1,0,
-             1,1,0,0,
-             0,0,0,0],
-            [0,1,0,0,
-             0,1,1,0,
-             0,0,1,0,
-             0,0,0,0],
-        ],
-    },
-]
 
 const INITIAL_INTERVAL = 500;
 const INTERVAL_SPEEDUP = 0.8;
@@ -188,14 +69,15 @@ class Tetris extends Phaser.Scene {
 
     }
 
+    // Creates a new random Tetronimo at the top of the screen.
     spawnTetronimo() {
-        const id = Math.floor(Math.random() * tetronimos.length);
+        const id = Math.floor(Math.random() * Tetronimos.length);
         const tiltLoss = Math.abs(this.currentTilt);
         this.tetronimo = {
-            tile: tetronimos[id].tile,
-            masks: tetronimos[id].masks,
+            tile: Tetronimos[id].tile,
+            masks: Tetronimos[id].masks,
             currentMask: 0,
-            position: [3, tetronimos[id].startOffset + tiltLoss]
+            position: [3, Tetronimos[id].startOffset + tiltLoss]
         };
         this.showTetronimo();
         if (this.isBlocked([0, 0], 0)) {
