@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 
-import { Tetronimos } from './tetronimos';
+import { Tetronimos, TetronimoDef } from './tetronimos';
 
 // @ts-ignore
 import ImgBackground from './images/background.png';
@@ -19,10 +19,32 @@ const TILT_THRESHOLD = 8;
 
 class Tetronimo {
     tile: number;
-    startOffset?: number;  // Code smell!
     currentMask: number;
-    position: Array<number>;
+    position: Point;
     masks: Array<Array<number>>;
+
+    constructor(def: TetronimoDef, tiltLoss: number) {
+        this.tile = def.tile,
+        this.masks = def.masks,
+        this.currentMask = 0,
+        this.position = new Point(3, def.startOffset + tiltLoss)
+    };
+}
+
+class Point {
+    x: number = 0;
+    y: number = 0;
+
+    constructor();
+    constructor(x: number, y: number);
+    constructor(x: number = 0, y: number = 0) {
+        this.x = x;
+        this.y = y;
+    }
+
+    plus(p: Point): Point {
+        return new Point(this.x + p.x, this.y + p.y);
+    }
 }
 
 class Tetris extends Phaser.Scene {
@@ -46,7 +68,7 @@ class Tetris extends Phaser.Scene {
 
     playing: boolean;
 
-    moveRequested: Array<number>;
+    moveRequested: Point;
     rotateRequested: boolean;
     dropRequested: boolean;
 
@@ -66,21 +88,15 @@ class Tetris extends Phaser.Scene {
     constructor() {
         super();
         this.tetronimo = undefined;
-
     }
 
     // Creates a new random Tetronimo at the top of the screen.
     spawnTetronimo() {
         const id = Math.floor(Math.random() * Tetronimos.length);
         const tiltLoss = Math.abs(this.currentTilt);
-        this.tetronimo = {
-            tile: Tetronimos[id].tile,
-            masks: Tetronimos[id].masks,
-            currentMask: 0,
-            position: [3, Tetronimos[id].startOffset + tiltLoss]
-        };
+        this.tetronimo = new Tetronimo(Tetronimos[id], tiltLoss);
         this.showTetronimo();
-        if (this.isBlocked([0, 0], 0)) {
+        if (this.isBlocked(new Point(), 0)) {
             this.gameOver();
         }
     }
@@ -93,10 +109,10 @@ class Tetris extends Phaser.Scene {
         for (let x = 0; x < 4; x++) {
             for (let y = 0; y < 4; y++) {
                 if (mask[x + y * 4]) {
-                    const px = t.position[0] + x;
-                    const py = t.position[1] + y + this.tiltAdjust(px);
+                    const px = t.position.x + x;
+                    const py = t.position.y + y + this.tiltAdjust(px);
 
-                    this.setData(px, py, t.tile);
+                    this.setData(new Point(px, py), t.tile);
                 }
             }
         }
@@ -114,12 +130,12 @@ class Tetris extends Phaser.Scene {
 
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width / 2; x++) {
-                if (this.getData(x, y)) {
+                if (this.getData(new Point(x, y))) {
                     leftWeight++;
                 }
             }
             for (let x = this.width / 2; x < this.width; x++) {
-                if (this.getData(x, y)) {
+                if (this.getData(new Point(x, y))) {
                     rightWeight++;
                 }
             }
@@ -139,10 +155,10 @@ class Tetris extends Phaser.Scene {
             const tiltDiff = newTilt - this.currentTilt;
             for (let y = 0; y < this.height; y++) {
                 for (let x = 0; x < this.width / 2; x++) {
-                    this.moveTile(x, y, tiltDiff);
+                    this.moveTile(new Point(x, y), tiltDiff);
                 }
                 for (let x = this.width / 2; x < this.width; x++) {
-                    this.moveTile(x, y, -tiltDiff);
+                    this.moveTile(new Point(x, y), -tiltDiff);
                 }
             }
             this.currentTilt = newTilt;
@@ -163,7 +179,7 @@ class Tetris extends Phaser.Scene {
             let completeLine = true;
             for (let x = 0; x < this.width; x++) {
                 const py = y + this.tiltAdjust(x);
-                if (this.getData(x, py) == 0) {
+                if (this.getData(new Point(x, py)) == 0) {
                     completeLine = false;
                 }
             }
@@ -172,11 +188,11 @@ class Tetris extends Phaser.Scene {
                 for (let y2 = y; y2 > 0; y2--) {
                     for (let x = 0; x < this.width; x++) {
                         const py = y2 + this.tiltAdjust(x)
-                        this.setData(x, py, this.getData(x, py-1));
+                        this.setData(new Point(x, py), this.getData(new Point(x, py-1)));
                     }
                 }
                 for (let x = 0; x < this.width; x++) {
-                    this.setData(x, 0, this.getData(x, 0));
+                    this.setData(new Point(x, 0), this.getData(new Point(x, 0)));
                 }
             }
         }
@@ -201,9 +217,9 @@ class Tetris extends Phaser.Scene {
         for (let x = 0; x < 4; x++) {
             for (let y = 0; y < 4; y++) {
                 if (mask[x + y * 4]) {
-                    const px = t.position[0] + x;
-                    const py = t.position[1] + y + this.tiltAdjust(px);
-                    this.setTile(px, py, 0);
+                    const px = t.position.x + x;
+                    const py = t.position.y + y + this.tiltAdjust(px);
+                    this.setTile(new Point(px, py), 0);
                 }
             }
         }
@@ -215,9 +231,9 @@ class Tetris extends Phaser.Scene {
         for (let x = 0; x < 4; x++) {
             for (let y = 0; y < 4; y++) {
                 if (mask[x + y * 4]) {
-                    const px = t.position[0] + x;
-                    const py = t.position[1] + y + this.tiltAdjust(px);
-                    this.setTile(px, py, t.tile);
+                    const px = t.position.x + x;
+                    const py = t.position.y + y + this.tiltAdjust(px);
+                    this.setTile(new Point(px, py), t.tile);
                 }
             }
         }
@@ -231,20 +247,20 @@ class Tetris extends Phaser.Scene {
         }
     }
 
-    isBlocked(delta: Array<number>, rotation: number) {
+    isBlocked(delta: Point, rotation: number) {
         const t = this.tetronimo!;  // TODO: Code defensively.
         const mask = t.masks[(t.currentMask + rotation) % t.masks.length];
         for (let x = 0; x < 4; x++) {
             for (let y = 0; y < 4; y++) {
                 if (mask[x + y * 4]) {
-                    const px = t.position[0] + x + delta[0];
-                    const py = t.position[1] + y + delta[1] + this.tiltAdjust(px);
+                    const px = t.position.x + x + delta.x;
+                    const py = t.position.y + y + delta.y + this.tiltAdjust(px);
 
                     if (py < 0 || py >= this.height || px < 0 || px >= this.width) {
                         return true;
                     }
 
-                    const data = this.getData(px, py);
+                    const data = this.getData(new Point(px, py));
                     if (data) {
                         return true;
                     }
@@ -254,10 +270,10 @@ class Tetris extends Phaser.Scene {
         return false;
     }
 
-    moveTetronimo(delta: Array<number>) {   // TODO: Change to a custom type.
+    moveTetronimo(delta: Point) {   // TODO: Change to a custom type.
         this.hideTetronimo();
-        this.tetronimo!.position[0] += delta[0];  // TODO: Be defensive.
-        this.tetronimo!.position[1] += delta[1];
+        this.tetronimo!.position.x += delta.x;  // TODO: Be defensive.
+        this.tetronimo!.position.y += delta.y;
         this.showTetronimo();
     }
 
@@ -269,32 +285,32 @@ class Tetris extends Phaser.Scene {
     }
 
     tick() {
-        if (this.isBlocked([0, 1], 0)) {
+        if (this.isBlocked(new Point(0, 1), 0)) {
             this.finalizeTetronimo();
         } else {
-            this.moveTetronimo([0, 1]);
+            this.moveTetronimo(new Point(0, 1));
         }
     }
 
-    getData(x: number, y: number) {
-        if (y < 0 || y >= this.height) {
+    getData(p: Point) {
+        if (p.y < 0 || p.y >= this.height) {
             return 0;
         }
-        return this.tileData[x + y * this.width];
+        return this.tileData[p.x + p.y * this.width];
     }
 
-    moveTile(x: number, y: number, delta: number) {
-        const index = x + y * this.width;
+    moveTile(p: Point, delta: number) {
+        const index = p.x + p.y * this.width;
         this.tiles[index].y += delta * this.tileH / 2;
     }
 
-    setTile(x: number, y: number, value: number) {
-        const index = x + y * this.width;
+    setTile(p: Point, value: number) {
+        const index = p.x + p.y * this.width;
         this.tiles[index].setFrame(value);
     }
 
-    setData(x: number, y: number, value: number) {
-        const index = x + y * this.width;
+    setData(p: Point, value: number) {
+        const index = p.x + p.y * this.width;
         this.tileData[index] = value;
         this.tiles[index].setFrame(value);
     }
@@ -330,7 +346,7 @@ class Tetris extends Phaser.Scene {
     setUpGame() {
         for (let x = 0; x < 10; x++) {
             for (let y = 0; y < 20; y++) {
-                this.setData(x, y, 0);
+                this.setData(new Point(x, y), 0);
             }
         }
         this.updateWeights();
@@ -350,15 +366,15 @@ class Tetris extends Phaser.Scene {
     inputHandler(event: any) {  // TODO: Is there a type for this?
         if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.RIGHT) {
             event.preventDefault();
-            this.moveRequested[0] = 1;
+            this.moveRequested.x = 1;
         }
         if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.LEFT) {
             event.preventDefault();
-            this.moveRequested[0] = -1;
+            this.moveRequested.x = -1;
         }
         if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.DOWN) {
             event.preventDefault();
-            this.moveRequested[1] = 1;
+            this.moveRequested.y = 1;
         }
         if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.UP) {
             event.preventDefault();
@@ -436,7 +452,7 @@ class Tetris extends Phaser.Scene {
         this.soundBaDing = this.sound.add('ba-ding');
 
         this.nextTick = 0;
-        this.moveRequested = [0, 0];
+        this.moveRequested = new Point();
         this.dropRequested = false;
         this.rotateRequested = false;
         this.playing = true;
@@ -458,20 +474,20 @@ class Tetris extends Phaser.Scene {
     }
 
     processInput() {
-        if (this.moveRequested[0] || this.moveRequested[1]) {
+        if (this.moveRequested.x || this.moveRequested.y) {
             if (this.tetronimo) {
                 if (!this.isBlocked(this.moveRequested, 0)) {
                     this.moveTetronimo(this.moveRequested);
-                    if (this.moveRequested[1] > 0) {
+                    if (this.moveRequested.y > 0) {
                         this.setNextTickTime();
                     }
                 }
             }
-            this.moveRequested = [0, 0];
+            this.moveRequested = new Point();
         }
         if (this.rotateRequested) {
             if (this.tetronimo) {
-                if (!this.isBlocked([0, 0], 1)) {
+                if (!this.isBlocked(new Point(), 1)) {
                     this.rotateTetronimo(1);
                 }
             }
@@ -481,10 +497,10 @@ class Tetris extends Phaser.Scene {
         if (this.dropRequested) {
             if (this.tetronimo) {
                 let dy = 0;
-                while (!this.isBlocked([0, dy], 0)) {
+                while (!this.isBlocked(new Point(0, dy), 0)) {
                     dy++;
                 }
-                this.moveTetronimo([0, dy-1]);
+                this.moveTetronimo(new Point(0, dy-1));
                 this.finalizeTetronimo();
                 this.setNextTickTime();
                 this.addScore(dy);
