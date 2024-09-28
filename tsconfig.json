@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+      "outDir": "dist",
+      "esModuleInterop": true,
+      "target": "es6",
+      "types": ["phaser"],
+      "typeRoots": ["node_modules/@types", "types"],
+      }
+}

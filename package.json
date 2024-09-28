@@ -1,0 +1,23 @@
+{
+  "name": "balance-tetris",
+  "version": "0.3.0",
+  "description": "A tilty game of Tetris",
+  "main": "index.js",
+  "scripts": {
+    "dev": "webpack-dev-server",
+    "start": "webpack && npm run dev"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "browser-sync-webpack-plugin": "^2.3.0",
+    "clean-webpack-plugin": "^4.0.0",
+    "html-webpack-plugin": "^5.6.0",
+    "node-loader": "^2.0.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.6.2",
+    "webpack": "^5.95.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.1.0"
+  }
+}
