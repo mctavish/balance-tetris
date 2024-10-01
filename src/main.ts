@@ -5,6 +5,8 @@ import { Tetronimos, TetronimoDef } from './tetronimos';
 // @ts-ignore
 import ImgBackground from './images/background.png';
 // @ts-ignore
+import ImgOverlay from './images/ui-overlay.png';
+// @ts-ignore
 import ImgSpriteSheet from './images/spritesheet.png';
 // @ts-ignore
 import AudBaDing from './audio/tetris-ba-ding.ogg';
@@ -63,6 +65,7 @@ class Tetris extends Phaser.Scene {
     tetronimo?: Tetronimo;
     currentTilt: number;
     completedLines: number;
+    currentLevel: number;
     score: number;
     tileData: Array<number>;
 
@@ -82,6 +85,7 @@ class Tetris extends Phaser.Scene {
 
     // Resources
     background: Phaser.GameObjects.Sprite;
+    overlay: Phaser.GameObjects.Sprite;
     soundThudd: Phaser.Sound.WebAudioSound | Phaser.Sound.NoAudioSound | Phaser.Sound.HTML5AudioSound;
     soundBaDing: Phaser.Sound.WebAudioSound | Phaser.Sound.NoAudioSound | Phaser.Sound.HTML5AudioSound;
 
@@ -162,7 +166,7 @@ class Tetris extends Phaser.Scene {
                 }
             }
             this.currentTilt = newTilt;
-            this.background.setFrame(2-newTilt);
+            this.overlay.setFrame(2-newTilt);
             this.completeLines();
         }
     }
@@ -208,7 +212,17 @@ class Tetris extends Phaser.Scene {
             } else if (lineCount == 4) {
                 this.addScore(1200);
             }
+            let newLevel = Math.floor(this.completedLines / INTERVAL_LINES);
+            if (newLevel != this.currentLevel) {
+                this.setLevel(newLevel);
+            }
         }
+    }
+
+    setLevel(newLevel: number) {
+        this.currentLevel = newLevel;
+        // TODO: Sound effects and other good stuff.
+        this.background.setFrame(this.currentLevel % 6);
     }
 
     hideTetronimo() {
@@ -332,6 +346,7 @@ class Tetris extends Phaser.Scene {
 
     preload() {
         this.load.spritesheet('background', ImgBackground, { frameWidth: 600, frameHeight: 800});
+        this.load.spritesheet('overlay', ImgOverlay, { frameWidth: 600, frameHeight: 800});
         this.load.spritesheet('tiles', ImgSpriteSheet, { frameWidth: 16, frameHeight: 16 });
         this.load.audio('ba-ding', [AudBaDing]);
         this.load.audio('thud', [AudThud]);
@@ -339,7 +354,7 @@ class Tetris extends Phaser.Scene {
 
     gameOver() {
         this.playing = false;
-        this.background.setFrame(5);
+        this.overlay.setFrame(5);
         this.newGameButton.setVisible(true);
     }
 
@@ -350,7 +365,8 @@ class Tetris extends Phaser.Scene {
             }
         }
         this.updateWeights();
-        this.background.setFrame(2);
+        this.background.setFrame(0);
+        this.overlay.setFrame(2);
 
         this.score = 0;
         this.completedLines = 0;
@@ -387,7 +403,8 @@ class Tetris extends Phaser.Scene {
     }
 
     create() {
-        this.background = this.add.sprite(300, 400, 'background', 2);
+        this.background = this.add.sprite(300, 400, 'background', 0);
+        this.overlay = this.add.sprite(300, 400, 'overlay', 2);
 
         const gridX = 60;
         const gridY = 70;
