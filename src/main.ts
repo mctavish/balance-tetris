@@ -2,13 +2,13 @@ import Phaser from 'phaser';
 
 import { Tetronimos, TetronimoDef } from './tetronimos';
 
-// @ts-ignore
+// @ts-expect-error Webpack asset
 import ImgBackground from './images/background.png';
-// @ts-ignore
+// @ts-expect-error Webpack asset
 import ImgSpriteSheet from './images/spritesheet.png';
-// @ts-ignore
+// @ts-expect-error Webpack asset
 import AudBaDing from './audio/tetris-ba-ding.ogg';
-// @ts-ignore
+// @ts-expect-error Webpack asset
 import AudThud from './audio/tetris-thud.ogg';
 
 const INITIAL_INTERVAL = 500;
@@ -24,10 +24,10 @@ class Tetronimo {
     masks: Array<Array<number>>;
 
     constructor(def: TetronimoDef, tiltLoss: number) {
-        this.tile = def.tile,
-        this.masks = def.masks,
-        this.currentMask = 0,
-        this.position = new Point(3, def.startOffset + tiltLoss)
+        this.tile = def.tile;
+        this.masks = def.masks;
+        this.currentMask = 0;
+        this.position = new Point(3, def.startOffset + tiltLoss);
     };
 }
 
@@ -363,7 +363,7 @@ class Tetris extends Phaser.Scene {
     }
 
     /** Changes keyboard events into requests to the gameloop. */
-    inputHandler(event: any) {  // TODO: Is there a type for this?
+    inputHandler(event: KeyboardEvent) {
         if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.RIGHT) {
             event.preventDefault();
             this.moveRequested.x = 1;
@@ -509,7 +509,7 @@ class Tetris extends Phaser.Scene {
         }
     }
 
-    update(time: number, delta: number) {
+    update(time: number) {
         if (this.playing) {
             this.currentTime = time;
             this.processInput();
@@ -534,4 +534,4 @@ const config = {
     scene: Tetris,
 };
 
-const game = new Phaser.Game(config);
+new Phaser.Game(config);
