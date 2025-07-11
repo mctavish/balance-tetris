@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "webpack-dev-server",
-    "start": "webpack && npm run dev",
-    "lint": "eslint src --ext .ts"
+    "start": "webpack-dev-server",
+    "lint": "eslint src --ext .ts",
+    "build": "webpack"
   },
   "author": "",
   "license": "ISC",
