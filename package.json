@@ -4,9 +4,10 @@
   "description": "A tilty game of Tetris",
   "main": "index.js",
   "scripts": {
-    "dev": "webpack-dev-server",
-    "start": "webpack && npm run dev",
-    "lint": "eslint src --ext .ts"
+    "dev": "webpack-dev-server --mode development",
+    "start": "webpack-dev-server --mode development",
+    "lint": "eslint src --ext .ts",
+    "build": "webpack"
   },
   "author": "",
   "license": "ISC",
