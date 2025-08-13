@@ -8,3 +8,6 @@ harder.  If the scales tip too far then it's game over.
 
 I'm currently (Sept 2024) working on a feature backlog curated from the GameJam
 feedback with the intent of turning this into a more polished and fun game.
+
+This has turned more into a repository where I'm playing around with the game
+engine and some coding tools.
